@@ -486,15 +486,41 @@ Employee refund to company: created when the employee spent less than the disbur
 Refund entity fields:
 - legalization (OneToOne, unique FK)
 - companyAccount (String — company account identifier)
-- amount (integer)
+- amount (integer) = settlement difference (positive)
 - paymentDate
 - referenceNumber (unique, business key)
 - registeredBy (ManyToOne → User)
 - observations (optional, TEXT)
 - createdAt, updatedAt
 
-Refund/entity contains:
-• Refund
+Refund DTOs:
+
+RegisterRefundRequest: companyAccount (@NotBlank), refundReference (@NotBlank), refundDate (@NotNull), comments (optional)
+
+RefundResponse: id, legalizationId, requestNumber, refundAmount, companyAccount, refundReference, refundDate, comments, registeredById, registeredByName, createdAt
+
+RefundMapper (MapStruct):
+- `legalizationId` ← `legalization.id`
+- `requestNumber` ← `legalization.travelRequest.requestNumber` (expression)
+- `refundAmount` ← `amount`
+- `refundReference` ← `referenceNumber`
+- `refundDate` ← `paymentDate`
+- `comments` ← `observations`
+- `registeredByName` ← `registeredBy.firstName + " " + registeredBy.lastName` (expression)
+
+Refund business rules (registerRefund):
+- Legalization must exist.
+- Settlement analysis type must be REFUND.
+- Refund must not already exist for this legalization.
+- Logged user must be FINANCIERA or ADMINISTRADOR.
+- refundAmount = analysis.difference() (positive, since difference > 0 when REFUND).
+- TravelRequest status → CERRADA.
+
+Refund endpoint:
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | /api/v1/refunds/legalization/{id} | Register refund |
 
 ### Settlement Analysis
 
@@ -523,8 +549,47 @@ No controller — analysis is consumed internally by validation/closure workflow
 
 Company reimbursement to employee: created when the employee spent more than the disbursed amount. One Legalization may have at most one Reimbursement.
 
-Reimbursement/entity contains:
-• Reimbursement
+Reimbursement entity fields:
+- legalization (OneToOne, unique FK)
+- employeeAccount (ManyToOne → Account)
+- amount (integer) = |settlement difference| (positive)
+- paymentDate
+- referenceNumber (unique, business key)
+- registeredBy (ManyToOne → User)
+- observations (optional, TEXT)
+- createdAt, updatedAt
+
+Reimbursement DTOs:
+
+RegisterReimbursementRequest: accountId (@NotNull), paymentReference (@NotBlank), paymentDate (@NotNull), comments (optional)
+
+ReimbursementResponse: id, legalizationId, requestNumber, reimbursementAmount, accountId, accountNumber, paymentReference, paymentDate, comments, registeredById, registeredByName, createdAt
+
+ReimbursementMapper (MapStruct):
+- `legalizationId` ← `legalization.id`
+- `requestNumber` ← `legalization.travelRequest.requestNumber` (expression)
+- `reimbursementAmount` ← `amount`
+- `accountId` ← `employeeAccount.id`
+- `accountNumber` ← `employeeAccount.accountNumber`
+- `paymentReference` ← `referenceNumber`
+- `comments` ← `observations`
+- `registeredByName` ← `registeredBy.firstName + " " + registeredBy.lastName` (expression)
+
+Reimbursement business rules (registerReimbursement):
+- Legalization must exist.
+- Settlement analysis type must be REIMBURSEMENT.
+- Reimbursement must not already exist for this legalization.
+- Account must exist and be active.
+- Account owner must match the travel request applicant.
+- Logged user must be FINANCIERA or ADMINISTRADOR.
+- reimbursementAmount = |analysis.difference()| (absolute value, since difference < 0 when REIMBURSEMENT).
+- TravelRequest status → CERRADA.
+
+Reimbursement endpoint:
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | /api/v1/reimbursements/legalization/{id} | Register reimbursement |
 
 ### Audit
 
