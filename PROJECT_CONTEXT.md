@@ -310,6 +310,12 @@ The following conceptual statuses used in business discussions map to concrete e
 - DEPARTMENT
 - OPERATION_CENTER
 
+### SettlementType
+
+- REFUND
+- REIMBURSEMENT
+- BALANCED
+
 ---
 
 ## 8. Domain Modules
@@ -477,8 +483,41 @@ Accounting allocation: selected from a predefined catalog during legalization cr
 
 Employee refund to company: created when the employee spent less than the disbursed amount. One Legalization may have at most one Refund.
 
+Refund entity fields:
+- legalization (OneToOne, unique FK)
+- companyAccount (String — company account identifier)
+- amount (integer)
+- paymentDate
+- referenceNumber (unique, business key)
+- registeredBy (ManyToOne → User)
+- observations (optional, TEXT)
+- createdAt, updatedAt
+
 Refund/entity contains:
 • Refund
+
+### Settlement Analysis
+
+A read-only analysis service that determines whether a legalization requires a refund, a reimbursement, or is balanced. No records are created by the analysis itself.
+
+Calculates: `difference = disbursedAmount - totalExpenses`
+
+| Result | SettlementType |
+|---|---|
+| difference > 0 | REFUND — employee owes company |
+| difference < 0 | REIMBURSEMENT — company owes employee |
+| difference = 0 | BALANCED — no action needed |
+
+Settlement module structure:
+- `settlement/type/SettlementType.java` (enum: REFUND, REIMBURSEMENT, BALANCED)
+- `settlement/dto/response/SettlementAnalysisResponse.java`
+- `settlement/service/SettlementAnalysisService.java` (interface)
+- `settlement/service/SettlementAnalysisServiceImpl.java` (read-only implementation)
+
+SettlementAnalysisResponse fields:
+- legalizationId, requestNumber, disbursedAmount, totalExpenses, difference, settlementType
+
+No controller — analysis is consumed internally by validation/closure workflows.
 
 ### Reimbursement
 
@@ -1034,6 +1073,13 @@ com.demo.travel_expense_management
 │
 │   Legalization aggregates expenses and support files for a
 │   single travel request. SupportFile tracks versioned file uploads.
+│
+├── settlement
+│   │   (read-only analysis — no entity, no controller)
+│   │
+│   ├── dto/response
+│   ├── service
+│   └── type
 │
 ├── refund
 ├── reimbursement
