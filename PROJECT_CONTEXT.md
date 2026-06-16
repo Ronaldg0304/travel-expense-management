@@ -553,6 +553,14 @@ All responses must use:
 
 ApiResponse<T>
 
+Fields: success, message, data, timestamp (LocalDateTime)
+
+Factory methods:
+
+- success(T data) — message is null
+- success(String message, T data)
+- error(String message)
+
 Standard HTTP status patterns:
 
 - 200 OK: Read, update

@@ -45,7 +45,7 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException("Document number already exists: " + request.documentNumber());
         }
         departmentRepository.findById(request.departmentId())
-            .orElseThrow(() -> new ResourceNotFoundException("Department", "id", request.departmentId()));
+            .orElseThrow(() -> new ResourceNotFoundException("Department not found with id: " + request.departmentId()));
 
         User user = userMapper.toEntity(request);
         user.setActive(true);
@@ -58,9 +58,9 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserResponse update(Long id, UpdateUserRequest request) {
         User user = userRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+            .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
         departmentRepository.findById(request.departmentId())
-            .orElseThrow(() -> new ResourceNotFoundException("Department", "id", request.departmentId()));
+            .orElseThrow(() -> new ResourceNotFoundException("Department not found with id: " + request.departmentId()));
 
         userMapper.updateEntity(request, user);
 
@@ -71,7 +71,7 @@ public class UserServiceImpl implements UserService {
     public UserResponse findById(Long id) {
         return userRepository.findById(id)
             .map(userMapper::toResponse)
-            .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+            .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
     }
 
     @Override
@@ -84,7 +84,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void activate(Long id) {
         User user = userRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+            .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
         user.setActive(true);
         userRepository.save(user);
     }
@@ -93,7 +93,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void deactivate(Long id) {
         User user = userRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+            .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
         user.setActive(false);
         userRepository.save(user);
     }

@@ -67,13 +67,13 @@ public class UserController {
     @Operation(summary = "Activate a user")
     public ResponseEntity<ApiResponse<Void>> activate(@PathVariable Long id) {
         userService.activate(id);
-        return ResponseEntity.ok(ApiResponse.<Void>success(null, "User activated"));
+        return ResponseEntity.ok(ApiResponse.<Void>success("User activated", null));
     }
 
     @PatchMapping("/{id}/deactivate")
     @Operation(summary = "Deactivate a user")
     public ResponseEntity<ApiResponse<Void>> deactivate(@PathVariable Long id) {
         userService.deactivate(id);
-        return ResponseEntity.ok(ApiResponse.<Void>success(null, "User deactivated"));
+        return ResponseEntity.ok(ApiResponse.<Void>success("User deactivated", null));
     }
 }
