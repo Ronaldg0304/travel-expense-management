@@ -390,9 +390,23 @@ Register requires APROBADA status, no existing disbursement, and role FINANCIERA
 
 Expense reporting: contains expenses, support files, and a cost center allocation. Connected to a single TravelRequest.
 
+Legalization entity does NOT have its own `status` field — status is derived from the associated `TravelRequest.RequestStatus` (LEGALIZADA, LEGALIZACION_DEVUELTA, VALIDADA).
+
 Legalization/entity contains:
 • Legalization
 • SupportFile
+
+### Legalization Endpoints
+
+| Endpoint | Method | Description |
+|---|---|---|
+| /api/v1/legalizations | POST | Submit legalization (DESEMBOLSADA → LEGALIZADA) |
+| /api/v1/legalizations/{id} | GET | Find by ID |
+| /api/v1/legalizations | GET | Paginated list |
+| /api/v1/legalizations/travel-request/{id} | GET | Find by travel request |
+| /api/v1/legalizations/{id}/validate | POST | Validate (LEGALIZADA → VALIDADA) |
+| /api/v1/legalizations/{id}/return | POST | Return for correction (LEGALIZADA → LEGALIZACION_DEVUELTA) |
+| /api/v1/legalizations/{id}/resubmit | POST | Resubmit corrected (LEGALIZACION_DEVUELTA → LEGALIZADA) |
 
 ### Expense
 
@@ -541,6 +555,11 @@ Legalization entity fields:
 - submittedAt
 - validatedAt (nullable, set by FINANCIERA)
 - observations (nullable, TEXT)
+- expenses (OneToMany → Expense, CascadeType.ALL, orphanRemoval = true)
+- supportFiles (OneToMany → SupportFile, CascadeType.ALL, orphanRemoval = true)
+- createdAt, updatedAt (timestamps)
+
+**IMPORTANT:** The Legalization entity does NOT have a `status` field. Status is managed at the TravelRequest aggregate level via `TravelRequest.RequestStatus`. Legalization lifecycle statuses are `LEGALIZADA`, `LEGALIZACION_DEVUELTA`, `VALIDADA` — all stored as `TravelRequest.status`. The DTO `status` field is derived from `legalization.travelRequest.status` in the mapper.
 
 Relationship: TravelRequest 1 ↔ 1 Legalization
 
@@ -548,13 +567,29 @@ Relationship: TravelRequest 1 ↔ 1 Legalization
 
 Expense entity fields:
 
-- legalization (ManyToOne)
+- legalization (ManyToOne → Legalization)
 - expenseType (ManyToOne → ExpenseType catalog)
 - expenseDate
 - description
 - amount (integer)
+- createdAt, updatedAt (timestamps)
 
-One Legalization contains many Expenses.
+One Legalization contains many Expenses. Expenses are lifecycle-managed by the parent Legalization (cascade persist, cascade delete). The embedded `expenses` list on Legalization uses `orphanRemoval = true`.
+
+### DTO Fields
+
+LegalizationResponse:
+- id, travelRequestId, requestNumber, applicantName, costCenterId, costCenterName
+- **totalExpenses**: computed field = sum of all Expense.amount in the legalization (not persisted)
+- **status**: derived from travelRequest.status (LEGALIZADA / LEGALIZACION_DEVUELTA / VALIDADA)
+- **submittedAt**: from entity field
+- **expenses**: List&lt;ExpenseResponse&gt; (flattened)
+
+LegalizationSummaryResponse:
+- id, requestNumber, applicantName, totalExpenses (computed), status (derived)
+
+ExpenseResponse:
+- id, expenseTypeId, expenseTypeName, expenseDate, description, amount
 
 ### ExpenseType
 
