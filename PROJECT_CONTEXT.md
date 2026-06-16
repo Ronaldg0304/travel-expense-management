@@ -396,6 +396,28 @@ Legalization/entity contains:
 • Legalization
 • SupportFile
 
+### SupportFile
+
+Versioned file attachments for legalizations. Files are stored on the local filesystem; metadata in the database.
+
+SupportFile entity fields:
+- legalization (ManyToOne → Legalization)
+- versionNumber
+- originalFileName / storedFileName / filePath
+- mimeType / fileSize
+- active (boolean)
+- uploadedAt
+
+One Legalization contains many SupportFile records. SupportFiles are versioned — only the latest active version is visible.
+
+DTO fields:
+
+SupportFileResponse:
+- id, legalizationId, originalFileName, storedFileName, mimeType, fileSize, version (maps from versionNumber), active, uploadedAt
+
+SupportFileSummaryResponse:
+- id, originalFileName, version, uploadedAt
+
 ### Legalization Endpoints
 
 | Endpoint | Method | Description |
@@ -993,6 +1015,13 @@ com.demo.travel_expense_management
 │
 │   ExpenseType is a catalog entity managed by ADMINISTRADOR.
 │
+├── storage
+│   │   (cross-cutting infrastructure — no entity, no controller)
+│   │
+│   └── service
+│       ├── FileStorageService.java        (interface)
+│       └── LocalFileStorageService.java   (@Service implementation)
+│
 └── audit
 
 ---
@@ -1042,27 +1071,67 @@ user
 
 ## 22. File Storage Strategy
 
-### MVP Implementation
+### Service Contract
 
-Support files are stored on the local filesystem.
+File operations are abstracted behind `FileStorageService` interface in `storage/service/`:
 
-- Storage location is configurable via application.yml.
-- Path structure: {storage.location}/{legalizationId}/{version}/{storedFileName}
-- File names are UUID-based to avoid collisions. Original names preserved in database.
-- MIME type restrictions: application/pdf, image/jpeg, image/png.
-- Max file size: 10 MB per file (configured via Spring multipart settings).
+| Method | Signature | Returns |
+|---|---|---|
+| store | `(MultipartFile file, Long legalizationId, Integer version)` | `String` — UUID-based stored file name |
+| load | `(String storedFileName)` | `Resource` — readable file resource |
+| delete | `(String storedFileName)` | `void` |
+| exists | `(String storedFileName)` | `boolean` |
+
+The `load/delete/exists` methods receive the **file path** stored in the entity's `filePath` field (e.g., `42/1/uuid.pdf`), which the implementation resolves relative to `storage.location`.
+
+### MVP Implementation: LocalFileStorageService
+
+- `@Service`, reads `storage.location` via `@Value("${storage.location}")`.
+- Path structure: `{storage.location}/{legalizationId}/{version}/{storedFileName}`.
+- Directories created automatically via `Files.createDirectories()`.
+- File names are UUID-based to avoid collisions. Original extension preserved.
+- Returns only the stored file name (UUID). The caller constructs the `filePath` for the entity.
+
+### Configuration
+
+```yaml
+storage:
+  location: ${STORAGE_LOCATION:uploads/support-files}
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+```
+
+### Technical Validation
+
+MIME type (`application/pdf`, `image/jpeg`, `image/png`) and file size (10 MB max) are enforced by the **legalization service caller**, not by the storage service. The storage service performs no business validations.
 
 ### Versioning
 
 - On initial upload: versionNumber = 1, active = true.
 - On correction upload: previous files set to active = false, new files get versionNumber + 1, active = true.
-- Queries filter by active = true to retrieve the latest package.
+- Queries filter by `active = true` to retrieve the latest package.
 - Previous version files remain on disk; cleanup is handled by a scheduled job if needed.
+
+### Repository Queries
+
+SupportFileRepository (in `legalization/repository/`):
+
+| Method | Purpose |
+|---|---|
+| `findByLegalizationIdAndActiveTrue(Long legalizationId)` | Active files for a legalization |
+| `findByLegalizationIdOrderByVersionNumberDesc(Long legalizationId)` | All files ordered by version (newest first) |
+| `findTopByLegalizationIdOrderByVersionNumberDesc(Long legalizationId)` | Latest version number for a legalization |
+
+Entity field is `versionNumber` (not `version`), so JPA derived query methods must use `VersionNumber` in the method name.
 
 ### Production Path
 
 - Swap local filesystem for S3-compatible object storage.
-- Replace file writes with cloud SDK calls behind a StorageService interface.
+- Replace file writes with cloud SDK calls behind the existing `FileStorageService` interface.
 - Add virus scanning, CDN delivery, and pre-signed URLs for secure access.
 
 ---

@@ -6,6 +6,10 @@ spring:
     name: travel-expense-management
   profiles:
     active: dev
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:travel_expense_management_db}
     username: root
@@ -25,3 +29,6 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.MySQLDialect
         use_sql_comments: true
+
+storage:
+  location: ${STORAGE_LOCATION:uploads/support-files}
