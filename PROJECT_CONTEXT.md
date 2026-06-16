@@ -129,45 +129,138 @@ Refresh Tokens stored in database.
 
 ## 6. Core Business Flow
 
+### Flow Diagram
+
+```
 BORRADOR
-↓
-ENVIADA
-↓
-APROBADA | DEVUELTA | RECHAZADA
+  │
+  ├── (submitForApproval) ──→ ENVIADA
+  │
+  │   ENVIADA
+  │     │
+  │     ├── (approve) ──────→ APROBADA
+  │     ├── (return) ───────→ DEVUELTA
+  │     └── (reject) ───────→ RECHAZADA
+  │
+  │   DEVUELTA
+  │     │
+  │     └── (resubmit) ─────→ ENVIADA
+  │
+  │   APROBADA
+  │     │
+  │     └── (disburse) ─────→ DESEMBOLSADA
+  │
+  │   DESEMBOLSADA
+  │     │
+  │     └── (legalize) ─────→ LEGALIZADA
+  │
+  │   LEGALIZADA
+  │     │
+  │     ├── (validate) ─────→ VALIDADA
+  │     └── (return) ───────→ LEGALIZACION_DEVUELTA
+  │
+  │   LEGALIZACION_DEVUELTA
+  │     │
+  │     └── (resubmit) ─────→ LEGALIZADA
+  │
+  │   VALIDADA
+  │     │
+  │     ├── (closeBalanced) ────────────────→ CERRADA
+  │     ├── (markPendingRefund) ────────────→ PENDIENTE_DEVOLUCION
+  │     └── (markPendingReimbursement) ────→ PENDIENTE_REEMBOLSO
+  │
+  │   PENDIENTE_DEVOLUCION
+  │     │
+  │     └── (registerRefund) ──────────────→ CERRADA
+  │
+  │   PENDIENTE_REEMBOLSO
+  │     │
+  │     └── (registerReimbursement) ───────→ CERRADA
+  │
+  RECHAZADA, CERRADA — terminal states
+```
 
-DEVUELTA
-↓
-ENVIADA
+### State Transition Matrix
 
-APROBADA
-↓
-DESEMBOLSADA
-↓
-LEGALIZADA
+| Current Status | Next Status | Trigger | Responsible Role | Side Effect |
+|---|---|---|---|---|
+| BORRADOR | ENVIADA | submitForApproval | EMPLEADO | Validation, requestNumber generation |
+| BORRADOR | — | updateDraft | EMPLEADO | No transition (stays BORRADOR) |
+| ENVIADA | APROBADA | approve | APROBADOR | Creates Approval record (APROBADA) |
+| ENVIADA | DEVUELTA | returnForCorrection | APROBADOR | Creates Approval record (DEVUELTA) |
+| ENVIADA | RECHAZADA | reject | APROBADOR | Creates Approval record (RECHAZADA) |
+| DEVUELTA | ENVIADA | resubmit | EMPLEADO | Clears previous approvals |
+| APROBADA | DESEMBOLSADA | registerDisbursement | FINANCIERA | Creates Disbursement record |
+| DESEMBOLSADA | LEGALIZADA | submitLegalization | EMPLEADO | Creates Legalization with Expenses + SupportFiles |
+| LEGALIZADA | VALIDADA | validateLegalization | FINANCIERA | Sets validatedAt on Legalization |
+| LEGALIZADA | LEGALIZACION_DEVUELTA | returnLegalization | FINANCIERA | Sets observations on Legalization |
+| LEGALIZACION_DEVUELTA | LEGALIZADA | resubmitLegalization | EMPLEADO | New versions of support files |
+| VALIDADA | CERRADA | closeWhenBalanced | FINANCIERA | disbursedAmount == totalExpensed |
+| VALIDADA | PENDIENTE_DEVOLUCION | markPendingRefund | FINANCIERA | disbursedAmount > totalExpensed |
+| VALIDADA | PENDIENTE_REEMBOLSO | markPendingReimbursement | FINANCIERA | disbursedAmount < totalExpensed |
+| PENDIENTE_DEVOLUCION | CERRADA | registerRefund | FINANCIERA | Creates Refund record |
+| PENDIENTE_REEMBOLSO | CERRADA | registerReimbursement | FINANCIERA | Creates Reimbursement record |
 
-LEGALIZADA
-↓
-VALIDADA | LEGALIZACION_DEVUELTA
+### Forbidden Transitions
 
-LEGALIZACION_DEVUELTA
-↓
-LEGALIZADA
+| From | To | Reason |
+|---|---|---|
+| Any → BORRADOR | Irreversible submission |
+| RECHAZADA → Any | Terminal state |
+| CERRADA → Any | Terminal state |
+| DESEMBOLSADA → DEVUELTA | After disbursement, corrections go through legalization |
+| BORRADOR → APROBADA | Must be submitted first |
+| APROBADA → ENVIADA | Cannot un-submit after approval |
+| Any → DESEMBOLSADA | Can only come from APROBADA |
 
-VALIDADA
-↓
-CERRADA
-or
-PENDIENTE_DEVOLUCION
-or
-PENDIENTE_REEMBOLSO
+### Operation Matrix
 
-PENDIENTE_DEVOLUCION
-↓
-CERRADA
+| Operation | Initial Status | Final Status | Authorized Roles | Preconditions |
+|---|---|---|---|---|
+| createDraft | — | BORRADOR | EMPLEADO | User must be active |
+| updateDraft | BORRADOR | BORRADOR | EMPLEADO | User is the applicant |
+| submitForApproval | BORRADOR | ENVIADA | EMPLEADO | All required fields filled |
+| approve | ENVIADA | APROBADA | APROBADOR | Approver assigned to department |
+| returnForCorrection | ENVIADA | DEVUELTA | APROBADOR | Comments required |
+| reject | ENVIADA | RECHAZADA | APROBADOR | Comments required |
+| resubmit | DEVUELTA | ENVIADA | EMPLEADO | Corrections applied |
+| registerDisbursement | APROBADA | DESEMBOLSADA | FINANCIERA | Disbursement does not exist yet |
+| submitLegalization | DESEMBOLSADA | LEGALIZADA | EMPLEADO | Legalization does not exist yet; expenses + support files included |
+| validateLegalization | LEGALIZADA | VALIDADA | FINANCIERA | Expenses verified; support files reviewed |
+| returnLegalization | LEGALIZADA | LEGALIZACION_DEVUELTA | FINANCIERA | Observations required |
+| resubmitLegalization | LEGALIZACION_DEVUELTA | LEGALIZADA | EMPLEADO | Corrections applied |
+| closeWhenBalanced | VALIDADA | CERRADA | FINANCIERA | disbursedAmount == totalExpensed |
+| markPendingRefund | VALIDADA | PENDIENTE_DEVOLUCION | FINANCIERA | disbursedAmount > totalExpensed |
+| markPendingReimbursement | VALIDADA | PENDIENTE_REEMBOLSO | FINANCIERA | disbursedAmount < totalExpensed |
+| registerRefund | PENDIENTE_DEVOLUCION | CERRADA | FINANCIERA | Refund record created |
+| registerReimbursement | PENDIENTE_REEMBOLSO | CERRADA | FINANCIERA | Reimbursement record created |
 
-PENDIENTE_REEMBOLSO
-↓
-CERRADA
+### Role Permissions By State
+
+| State | EMPLEADO | APROBADOR | FINANCIERA | ADMINISTRADOR |
+|---|---|---|---|---|
+| BORRADOR | create, update, submit | — | — | — |
+| ENVIADA | — | approve, return, reject | — | — |
+| DEVUELTA | resubmit | — | — | — |
+| APROBADA | — | — | disburse | — |
+| RECHAZADA | read | — | — | — |
+| DESEMBOLSADA | legalize | — | — | — |
+| LEGALIZADA | — | — | validate, return | — |
+| LEGALIZACION_DEVUELTA | resubmit | — | — | — |
+| VALIDADA | — | — | close, markRefund, markReimbursement | — |
+| PENDIENTE_DEVOLUCION | — | — | registerRefund | — |
+| PENDIENTE_REEMBOLSO | — | — | registerReimbursement | — |
+| CERRADA | read | — | — | — |
+
+### Conceptual Status Mapping
+
+The following conceptual statuses used in business discussions map to concrete enum values:
+
+| Conceptual | Enum Value | Context |
+|---|---|---|
+| PENDIENTE_APROBACION | ENVIADA | Request submitted, awaiting approver decision |
+| REQUIERE_CORRECCION | DEVUELTA | Request-level correction (pre-disbursement) |
+| REQUIERE_CORRECCION | LEGALIZACION_DEVUELTA | Legalization-level correction (post-disbursement) |
 
 ---
 
