@@ -376,6 +376,16 @@ A user can only act once per request.
 
 Travel advance payments
 
+### Disbursement Endpoints
+
+| Endpoint | Method | Description |
+|---|---|---|
+| /api/v1/disbursements/travel-request/{id} | POST | Register disbursement (APROBADA → DESEMBOLSADA) |
+| /api/v1/disbursements/travel-request/{id} | GET | Find disbursement by travel request |
+| /api/v1/disbursements | GET | Paginated list of disbursements |
+
+Register requires APROBADA status, no existing disbursement, and role FINANCIERA or ADMINISTRADOR. If disbursedAmount ≠ approvedAmount, adjustmentJustification is mandatory.
+
 ### Legalization
 
 Expense reporting: contains expenses, support files, and a cost center allocation. Connected to a single TravelRequest.
