@@ -63,6 +63,9 @@ public class TravelRequest {
     @Column(name = "requested_amount", nullable = false)
     private Integer requestedAmount;
 
+    @Column(name = "approved_amount")
+    private Integer approvedAmount;
+
     @Column(columnDefinition = "TEXT")
     private String observations;
 

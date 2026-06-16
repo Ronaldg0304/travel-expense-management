@@ -360,6 +360,18 @@ Submit requires the applicant's department to have at least one active approver.
 
 Approval process
 
+### Approval Endpoints
+
+| Endpoint | Method | Description |
+|---|---|---|
+| /api/v1/approvals/travel-request/{id}/approve | POST | Approve request (ENVIADA → APROBADA) |
+| /api/v1/approvals/travel-request/{id}/reject | POST | Reject request (ENVIADA → RECHAZADA) |
+| /api/v1/approvals/travel-request/{id}/history | GET | Approval history for a request |
+
+Approve sets `approvedAmount` on the TravelRequest. Reject requires comments.
+Both require the logged user to be an active approver for the applicant's department.
+A user can only act once per request.
+
 ### Disbursement
 
 Travel advance payments
