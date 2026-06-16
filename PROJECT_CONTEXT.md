@@ -420,15 +420,46 @@ SupportFileSummaryResponse:
 
 ### Legalization Endpoints
 
-| Endpoint | Method | Description |
+| Endpoint | Method | Controller Method | Description |
+|---|---|---|---|
+| /api/v1/legalizations | POST | create | Submit legalization (DESEMBOLSADA → LEGALIZADA) |
+| /api/v1/legalizations/{id} | GET | findById | Find by ID |
+| /api/v1/legalizations/travel-request/{id} | GET | findByTravelRequest | Find by travel request |
+| /api/v1/legalizations | GET | findAll | Paginated list |
+| /api/v1/legalizations/{id}/validate | POST | *pending* | Validate (LEGALIZADA → VALIDADA) |
+| /api/v1/legalizations/{id}/return | POST | *pending* | Return for correction (LEGALIZADA → LEGALIZACION_DEVUELTA) |
+| /api/v1/legalizations/{id}/resubmit | POST | *pending* | Resubmit corrected (LEGALIZACION_DEVUELTA → LEGALIZADA) |
+
+### Legalization Business Rules (create)
+
+| Rule | Validation | Error |
 |---|---|---|
-| /api/v1/legalizations | POST | Submit legalization (DESEMBOLSADA → LEGALIZADA) |
-| /api/v1/legalizations/{id} | GET | Find by ID |
-| /api/v1/legalizations | GET | Paginated list |
-| /api/v1/legalizations/travel-request/{id} | GET | Find by travel request |
-| /api/v1/legalizations/{id}/validate | POST | Validate (LEGALIZADA → VALIDADA) |
-| /api/v1/legalizations/{id}/return | POST | Return for correction (LEGALIZADA → LEGALIZACION_DEVUELTA) |
-| /api/v1/legalizations/{id}/resubmit | POST | Resubmit corrected (LEGALIZACION_DEVUELTA → LEGALIZADA) |
+| TravelRequest exists | `travelRequestRepository.findById()` | ResourceNotFoundException |
+| Status is DESEMBOLSADA | `travelRequest.getStatus() == DESEMBOLSADA` | BusinessException |
+| No duplicate legalization | `legalizationRepository.existsByTravelRequestId()` | BusinessException |
+| Logged user owns request | `currentUser.id == travelRequest.applicant.id` | BusinessException |
+| CostCenter exists + active | `costCenterRepository.findById()` + `.isActive()` | ResourceNotFoundException / BusinessException |
+| Each ExpenseType exists + active | `expenseTypeRepository.findById()` + `.isActive()` | ResourceNotFoundException / BusinessException |
+| At least one expense | `request.expenses().isEmpty()` | BusinessException |
+| Expense date not future | `expenseDate.isAfter(LocalDate.now())` | BusinessException |
+
+On success: Legalization created with `submittedAt = now`, TravelRequest status → `LEGALIZADA`.
+
+### LegalizationMapper (MapStruct)
+
+Uses `ExpenseMapper` as a dependency (`uses = {ExpenseMapper.class}`).
+
+Derived/computed field mappings:
+- `requestNumber` ← `travelRequest.requestNumber`
+- `applicantName` ← `travelRequest.applicant.firstName + " " + travelRequest.applicant.lastName`
+- `costCenterName` ← `costCenter.name`
+- `totalExpenses` ← computed as `sum(expense.amount)` via expression (null-safe)
+- `status` ← `travelRequest.status`
+
+### ExpenseMapper (MapStruct)
+
+- `expenseTypeId` ← `expenseType.id`
+- `expenseTypeName` ← `expenseType.name`
 
 ### Expense
 
