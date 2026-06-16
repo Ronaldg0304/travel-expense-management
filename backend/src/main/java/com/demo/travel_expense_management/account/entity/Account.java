@@ -47,8 +47,11 @@ public class Account {
     @Column(name = "account_number", nullable = false, unique = true)
     private String accountNumber;
 
-    @Column(nullable = false)
-    private String bank;
+    @Column(name = "bank_name", nullable = false)
+    private String bankName;
+
+    @Column(name = "account_holder_name", nullable = false)
+    private String accountHolderName;
 
     @Column(nullable = false)
     private boolean active;
