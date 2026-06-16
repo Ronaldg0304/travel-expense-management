@@ -793,6 +793,16 @@ com.demo.travel_expense_management
 │   DepartmentApprover represents the assignment of approvers to
 │   departments and is used by the approval routing process.
 │
+│   DepartmentApprover entity fields:
+│   • department (ManyToOne, required) — the department being configured
+│   • approver (ManyToOne → User, required) — the user assigned as approver
+│   • active (boolean)
+│
+│   Naming convention:
+│   • Entity field: approver — reflects the business role (approval routing)
+│   • API DTOs: userId, userFullName, userEmail — user-friendly API contract
+│   • Repository: findByDepartmentIdAndApproverId matches entity field name
+│
 ├── account
 ├── travelrequest
 ├── approval
