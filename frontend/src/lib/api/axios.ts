@@ -1,5 +1,6 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig } from 'axios';
-import { setupInterceptors } from '$lib/api/interceptors';
+import { setupAuthInterceptor } from '$lib/api/auth.interceptor';
+import { setupErrorInterceptor } from '$lib/api/error.interceptor';
 import { env } from '$lib/config/env';
 
 export interface ApiResponse<T> {
@@ -24,7 +25,8 @@ export const api: AxiosInstance = axios.create({
 	headers: { 'Content-Type': 'application/json' },
 });
 
-setupInterceptors(api);
+setupAuthInterceptor(api);
+setupErrorInterceptor(api);
 
 export async function request<T>(config: AxiosRequestConfig): Promise<T> {
 	const response = await api.request<ApiResponse<T>>(config);
