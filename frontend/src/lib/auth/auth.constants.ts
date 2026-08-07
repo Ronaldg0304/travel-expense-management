@@ -9,10 +9,9 @@ export const AUTH_STORAGE = {
 	authenticatedUser: STORAGE_KEYS.SESSION_USER,
 } as const;
 
+/** Paths are relative to `PUBLIC_API_BASE_URL` (default `/api`). */
 export const AUTH_ENDPOINTS = {
-	login: '/auth/login',
-	logout: '/auth/logout',
-	me: '/auth/me',
+	login: '/v1/auth/login',
 } as const;
 
 export const PUBLIC_ROUTES: ReadonlySet<string> = new Set<string>([

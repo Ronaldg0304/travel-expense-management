@@ -1,7 +1,7 @@
 export const USER_ROLES = [
 	'ADMINISTRADOR',
 	'EMPLEADO',
-	'APROBADOR',
+	'AVALADOR',
 	'FINANCIERA',
 ] as const;
 
@@ -10,7 +10,7 @@ export type UserRole = (typeof USER_ROLES)[number];
 export const ROLE_LABELS: Record<UserRole, string> = {
 	ADMINISTRADOR: 'Administrador',
 	EMPLEADO: 'Empleado',
-	APROBADOR: 'Aprobador',
+	AVALADOR: 'Avalador',
 	FINANCIERA: 'Financiera',
 };
 
@@ -27,14 +27,23 @@ export interface Session {
 	authenticatedUser: AuthenticatedUser;
 }
 
-export interface LoginPayload {
-	accessToken: string;
-	authenticatedUser: AuthenticatedUser;
-}
-
 export interface LoginCredentials {
 	email: string;
 	password: string;
+}
+
+/** Backend `LoginResponse` payload returned by `POST /api/v1/auth/login`. */
+export interface AuthLoginResponse {
+	accessToken: string;
+	tokenType: string;
+	expiresIn: number;
+	user: {
+		id: number;
+		firstName: string;
+		lastName: string;
+		email: string;
+		role: UserRole;
+	};
 }
 
 export type AuthStatus = 'idle' | 'authenticated' | 'unauthenticated';

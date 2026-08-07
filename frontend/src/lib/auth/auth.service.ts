@@ -2,38 +2,35 @@ import { request } from '$lib/api/axios';
 import { AUTH_ENDPOINTS } from '$lib/auth/auth.constants';
 import type {
 	AuthenticatedUser,
+	AuthLoginResponse,
 	LoginCredentials,
-	LoginPayload,
 } from '$lib/auth/auth.types';
 import { clearSession, setSession } from '$lib/stores/session.store';
 
 async function login(
 	credentials: LoginCredentials,
 ): Promise<AuthenticatedUser> {
-	const payload = await request<LoginPayload>({
+	const response = await request<AuthLoginResponse>({
 		method: 'POST',
 		url: AUTH_ENDPOINTS.login,
 		data: credentials,
 	});
+	const authenticatedUser: AuthenticatedUser = {
+		id: response.user.id,
+		email: response.user.email,
+		firstName: response.user.firstName,
+		lastName: response.user.lastName,
+		roles: [response.user.role],
+	};
 	setSession({
-		accessToken: payload.accessToken,
-		authenticatedUser: payload.authenticatedUser,
+		accessToken: response.accessToken,
+		authenticatedUser,
 	});
-	return payload.authenticatedUser;
+	return authenticatedUser;
 }
 
 async function logout(): Promise<void> {
-	try {
-		await request<null>({ method: 'POST', url: AUTH_ENDPOINTS.logout });
-	} catch {
-		// session is cleared regardless of the backend result
-	} finally {
-		clearSession();
-	}
+	clearSession();
 }
 
-async function fetchCurrentUser(): Promise<AuthenticatedUser> {
-	return request<AuthenticatedUser>({ method: 'GET', url: AUTH_ENDPOINTS.me });
-}
-
-export const authService = { login, logout, fetchCurrentUser };
+export const authService = { login, logout };

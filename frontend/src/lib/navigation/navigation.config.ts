@@ -102,7 +102,7 @@ export const navigationConfig: readonly RoleNavigation[] = [
 		],
 	},
 	{
-		roles: ['APROBADOR'],
+		roles: ['AVALADOR'],
 		sections: [
 			{
 				label: 'General',

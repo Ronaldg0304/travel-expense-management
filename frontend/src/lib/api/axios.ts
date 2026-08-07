@@ -2,22 +2,10 @@ import axios, { type AxiosInstance, type AxiosRequestConfig } from 'axios';
 import { setupAuthInterceptor } from '$lib/api/auth.interceptor';
 import { setupErrorInterceptor } from '$lib/api/error.interceptor';
 import { env } from '$lib/config/env';
+import type { ApiResponse } from '$lib/types/api';
+import type { Page } from '$lib/types/pagination';
 
-export interface ApiResponse<T> {
-	success: boolean;
-	message: string | null;
-	data: T;
-	timestamp: string;
-}
-
-export interface Page<T> {
-	content: T[];
-	page: number;
-	size: number;
-	totalElements: number;
-	totalPages: number;
-	last: boolean;
-}
+export type { ApiResponse, Page };
 
 export const api: AxiosInstance = axios.create({
 	baseURL: env.PUBLIC_API_BASE_URL,
