@@ -5,6 +5,22 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="text-scale" content="scale" />
 		<link rel="icon" href="/favicon.svg" />
+		<script>
+			(function () {
+				var key = 'tem.theme';
+				var pref = null;
+				try {
+					pref = localStorage.getItem(key);
+				} catch (e) {}
+				var mq =
+					window.matchMedia &&
+					window.matchMedia('(prefers-color-scheme: dark)');
+				var dark = pref === 'dark' || (pref === 'system' && mq && mq.matches);
+				var root = document.documentElement;
+				root.classList.toggle('dark', dark);
+				root.style.colorScheme = dark ? 'dark' : 'light';
+			})();
+		</script>
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">

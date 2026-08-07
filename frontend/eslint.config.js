@@ -21,9 +21,18 @@ export default tseslint.config(
 	{
 		files: ['**/*.svelte'],
 		languageOptions: {
+			parserOptions: {
+				parser: tseslint.parser,
+			},
 			globals: {
 				...globals.browser,
 			},
+		},
+	},
+	{
+		files: ['src/lib/components/ui/**/*.svelte'],
+		rules: {
+			'svelte/no-navigation-without-resolve': 'off',
 		},
 	},
 );
