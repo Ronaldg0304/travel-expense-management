@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
-	import type { Component, Snippet } from 'svelte';
+	import type { Snippet } from 'svelte';
+	import type { NavItem, NavSection } from '$lib/navigation';
+	import { isNavItemActive } from '$lib/navigation';
 	import { Separator } from '$lib/components/ui/separator';
 	import {
 		Tooltip,
@@ -9,19 +11,6 @@
 		TooltipTrigger,
 	} from '$lib/components/ui/tooltip';
 	import { cn } from '$lib/utils';
-
-	export interface NavItem {
-		label: string;
-		href: string;
-		icon?: Component<{ class?: string }>;
-		badge?: string;
-		disabled?: boolean;
-	}
-
-	export interface NavSection {
-		label?: string;
-		items: NavItem[];
-	}
 
 	interface Props {
 		sections?: NavSection[];
@@ -47,6 +36,7 @@
 
 	const path = $derived(page.url.pathname);
 
+	let asideRef = $state<HTMLElement | null>(null);
 	let isDesktop = $state(false);
 
 	$effect(() => {
@@ -57,11 +47,15 @@
 		return () => media.removeEventListener('change', onChange);
 	});
 
-	function isActive(item: NavItem): boolean {
-		const href = resolve(item.href as Parameters<typeof resolve>[0]);
-		if (href === '/') return path === '/';
-		return path === href || path.startsWith(`${href}/`);
-	}
+	$effect(() => {
+		if (!open || isDesktop) return;
+		const onKeydown = (event: KeyboardEvent) => {
+			if (event.key === 'Escape') onOverlayClick();
+		};
+		window.addEventListener('keydown', onKeydown);
+		asideRef?.focus();
+		return () => window.removeEventListener('keydown', onKeydown);
+	});
 
 	const isHidden = $derived(!isDesktop && !open);
 	const isCollapsed = $derived(collapsed && isDesktop);
@@ -77,6 +71,8 @@
 	{/if}
 
 	<aside
+		bind:this={asideRef}
+		tabindex="-1"
 		class={cn(
 			'border-sidebar-border bg-sidebar text-sidebar-foreground fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r transition-[transform,width] duration-200 ease-out lg:sticky lg:top-0 lg:h-dvh lg:translate-x-0',
 			open ? 'translate-x-0' : '-translate-x-full',
@@ -148,12 +144,12 @@
 		class={cn(
 			'group focus-visible:ring-ring flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none',
 			isCollapsed && 'lg:justify-center lg:px-0',
-			isActive(item)
+			isNavItemActive(item, path)
 				? 'bg-sidebar-accent text-sidebar-accent-foreground'
 				: 'text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground',
 			item.disabled && 'pointer-events-none opacity-50',
 		)}
-		aria-current={isActive(item) ? 'page' : undefined}
+		aria-current={isNavItemActive(item, path) ? 'page' : undefined}
 		aria-disabled={item.disabled || undefined}
 	>
 		{#if item.icon}

@@ -1,9 +1,10 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import type { NavSection } from '$lib/navigation';
 	import { cn } from '$lib/utils';
 	import ContentLayout from './ContentLayout.svelte';
 	import PageContainer from './PageContainer.svelte';
-	import Sidebar, { type NavSection } from './Sidebar.svelte';
+	import Sidebar from './Sidebar.svelte';
 	import Topbar from './Topbar.svelte';
 	import type { BreadcrumbItem } from './Breadcrumb.svelte';
 

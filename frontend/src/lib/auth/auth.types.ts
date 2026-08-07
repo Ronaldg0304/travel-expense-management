@@ -7,6 +7,13 @@ export const USER_ROLES = [
 
 export type UserRole = (typeof USER_ROLES)[number];
 
+export const ROLE_LABELS: Record<UserRole, string> = {
+	ADMINISTRADOR: 'Administrador',
+	EMPLEADO: 'Empleado',
+	APROBADOR: 'Aprobador',
+	FINANCIERA: 'Financiera',
+};
+
 export interface AuthenticatedUser {
 	id: number;
 	email: string;
