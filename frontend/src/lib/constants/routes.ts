@@ -14,6 +14,7 @@ export const ROUTES = {
 		expenseTypes: '/tipos-de-gasto',
 		expenseTypesNew: '/tipos-de-gasto/new',
 		accounts: '/cuentas',
+		accountsNew: '/cuentas/new',
 		travelRequests: '/solicitudes-de-viaje',
 		audit: '/auditoria',
 	},
