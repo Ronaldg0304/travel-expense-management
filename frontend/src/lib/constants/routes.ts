@@ -26,6 +26,7 @@ export const ROUTES = {
 	approver: {
 		pendingRequests: '/solicitudes-pendientes',
 		approvalHistory: '/historial-aprobaciones',
+		approvals: '/approvals',
 	},
 	finance: {
 		disbursements: '/desembolsos',

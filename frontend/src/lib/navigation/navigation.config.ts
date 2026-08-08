@@ -119,7 +119,7 @@ export const navigationConfig: readonly RoleNavigation[] = [
 				items: [
 					{
 						label: 'Solicitudes pendientes',
-						href: ROUTES.approver.pendingRequests,
+						href: ROUTES.approver.approvals,
 						icon: FileClock,
 					},
 					{

@@ -15,6 +15,8 @@
 		totalPages: number;
 		totalElements: number;
 		pageSizeOptions?: number[];
+		emptyTitle?: string;
+		emptyDescription?: string;
 		rowActions?: Snippet<[TravelRequestSummary]>;
 		onRetry?: () => void;
 		class?: string;
@@ -29,6 +31,8 @@
 		totalPages,
 		totalElements,
 		pageSizeOptions,
+		emptyTitle = 'No hay solicitudes de viaje',
+		emptyDescription = 'No se encontraron solicitudes de viaje para los criterios actuales.',
 		rowActions,
 		onRetry,
 		class: className,
@@ -88,8 +92,8 @@
 		{rowActions}
 		{onRetry}
 		getRowId={(row) => row.id}
-		emptyTitle="No hay solicitudes de viaje"
-		emptyDescription="No se encontraron solicitudes de viaje para los criterios actuales."
+		{emptyTitle}
+		{emptyDescription}
 		class={cn(className)}
 	/>
 {/snippet}
