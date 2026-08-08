@@ -5,5 +5,6 @@ export * from './cost-centers';
 export * from './expense-types';
 export * from './layout';
 export * from './tables';
+export * from './travel-requests';
 export * from './users';
 export * from './ui';
