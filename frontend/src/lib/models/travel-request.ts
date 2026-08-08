@@ -30,6 +30,14 @@ export const REQUEST_STATUS_LABELS: Record<RequestStatus, string> = {
 	CERRADA: 'Cerrada',
 };
 
+export interface TravelRequestFormValues {
+	travelPurpose: string;
+	destination: string;
+	departureDate: string;
+	returnDate: string;
+	requestedAmount: string;
+}
+
 export interface TravelRequestSummary {
 	id: number;
 	requestNumber: string;

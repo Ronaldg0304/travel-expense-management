@@ -1,11 +1,25 @@
 import type {
+	CreateTravelRequestDto,
 	TravelRequestResponseDto,
 	TravelRequestSummaryResponseDto,
 } from '$lib/dto/travel-request';
 import type {
 	TravelRequest,
+	TravelRequestFormValues,
 	TravelRequestSummary,
 } from '$lib/models/travel-request';
+
+export function toCreateTravelRequestDto(
+	values: TravelRequestFormValues,
+): CreateTravelRequestDto {
+	return {
+		travelPurpose: values.travelPurpose.trim(),
+		destination: values.destination.trim(),
+		departureDate: values.departureDate.trim(),
+		returnDate: values.returnDate.trim(),
+		requestedAmount: Number(values.requestedAmount),
+	};
+}
 
 export function toTravelRequestSummary(
 	dto: TravelRequestSummaryResponseDto,

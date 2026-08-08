@@ -1,5 +1,14 @@
 import type { RequestStatus } from '$lib/models/travel-request';
 
+/** POST /api/v1/travel-requests/draft — mirrors backend `CreateTravelRequestRequest`. */
+export interface CreateTravelRequestDto {
+	travelPurpose: string;
+	destination: string;
+	departureDate: string;
+	returnDate: string;
+	requestedAmount: number;
+}
+
 /** GET /api/v1/travel-requests — mirrors backend `TravelRequestSummaryResponse`. */
 export interface TravelRequestSummaryResponseDto {
 	id: number;

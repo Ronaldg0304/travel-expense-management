@@ -16,6 +16,7 @@ export const ROUTES = {
 		accounts: '/cuentas',
 		accountsNew: '/cuentas/new',
 		travelRequests: '/solicitudes-de-viaje',
+		travelRequestsNew: '/travel-requests/new',
 		audit: '/auditoria',
 	},
 	employee: {

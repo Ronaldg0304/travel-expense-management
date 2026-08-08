@@ -1,4 +1,6 @@
+import { apiClient } from '$lib/api/api-client';
 import type {
+	CreateTravelRequestDto,
 	TravelRequestResponseDto,
 	TravelRequestSummaryResponseDto,
 } from '$lib/dto/travel-request';
@@ -14,6 +16,15 @@ class TravelRequestService extends BaseService<TravelRequestResponseDto> {
 		pageRequest: PageRequest,
 	): Promise<PageResponse<TravelRequestSummaryResponseDto>> {
 		return this.getPage<TravelRequestSummaryResponseDto>(pageRequest);
+	}
+
+	createDraft(
+		payload: CreateTravelRequestDto,
+	): Promise<TravelRequestResponseDto> {
+		return apiClient.post<TravelRequestResponseDto>(
+			`${this.resourcePath}/draft`,
+			payload,
+		);
 	}
 }
 
