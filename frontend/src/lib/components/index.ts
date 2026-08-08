@@ -4,6 +4,7 @@ export * from './common';
 export * from './cost-centers';
 export * from './expense-types';
 export * from './layout';
+export * from './legalizations';
 export * from './tables';
 export * from './travel-requests';
 export * from './users';

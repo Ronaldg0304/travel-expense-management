@@ -4,6 +4,7 @@ export { costCenterService } from './cost-center.service';
 export { departmentService } from './department.service';
 export { disbursementService } from './disbursement.service';
 export { expenseTypeService } from './expense-type.service';
+export { legalizationService } from './legalization.service';
 export { travelApprovalService } from './travel-approval.service';
 export { travelRequestService } from './travel-request.service';
 export { userService } from './user.service';
