@@ -13,6 +13,7 @@
 	import { ConfirmDialog, PageHeader } from '$lib/components/common';
 	import { ApiError, LoadingState, toast } from '$lib/components/feedback';
 	import {
+		LegalizationClosureSection,
 		LegalizationDetail,
 		LegalizationForm,
 		LegalizationValidationSection,
@@ -28,6 +29,7 @@
 	import { toTravelRequest } from '$lib/mapper/travel-request.mapper';
 	import type { SettlementAnalysis } from '$lib/models/settlement';
 	import type { SupportFile } from '$lib/models/support-file';
+	import type { RequestStatus } from '$lib/models/travel-request';
 	import {
 		costCenterService,
 		expenseTypeService,
@@ -194,6 +196,18 @@
 			legalization?.status === 'LEGALIZADA',
 	);
 
+	const CLOSEABLE_STATUSES: RequestStatus[] = [
+		'VALIDADA',
+		'PENDIENTE_DEVOLUCION',
+		'PENDIENTE_REEMBOLSO',
+	];
+
+	const canClose = $derived(
+		hasAnyRole($user, ['FINANCIERA', 'ADMINISTRADOR']) &&
+			legalization != null &&
+			CLOSEABLE_STATUSES.includes(legalization.status),
+	);
+
 	const settlementAnalysisQuery = createQuery(() => ({
 		queryKey: ['legalization', 'settlement-analysis', currentLegalizationId],
 		queryFn: () => {
@@ -248,6 +262,45 @@
 		if (currentLegalizationId == null) return;
 		await validateMutation.mutateAsync();
 		validationDialogOpen = false;
+	}
+
+	let closeDialogOpen = $state(false);
+
+	const closeDescription = $derived(
+		travelRequest
+			? `La legalización de la solicitud ${travelRequest.requestNumber} será cerrada. Esta acción no se puede deshacer.`
+			: '',
+	);
+
+	const closeMutation = createMutation(() => ({
+		mutationFn: () => {
+			if (currentLegalizationId == null) {
+				throw new Error('No hay una legalización cargada');
+			}
+			return legalizationService.close(currentLegalizationId);
+		},
+		onSuccess: () => {
+			void queryClient.invalidateQueries({
+				queryKey: ['legalization', 'by-travel-request', travelRequestId],
+			});
+			void queryClient.invalidateQueries({
+				queryKey: ['travel-request', travelRequestId],
+			});
+			void queryClient.invalidateQueries({ queryKey: ['travel-requests'] });
+			toast.success('Legalización cerrada correctamente');
+		},
+		onError: (error) => {
+			toast.error(
+				'No se pudo cerrar la legalización',
+				getApiErrorMessage(error),
+			);
+		},
+	}));
+
+	async function confirmClose() {
+		if (currentLegalizationId == null) return;
+		await closeMutation.mutateAsync();
+		closeDialogOpen = false;
 	}
 
 	let pendingPayload = $state<CreateLegalizationDto | null>(null);
@@ -367,6 +420,14 @@
 				/>
 			{/if}
 
+			{#if canClose}
+				<LegalizationClosureSection
+					status={legalization.status}
+					closing={closeMutation.isPending}
+					onClose={() => (closeDialogOpen = true)}
+				/>
+			{/if}
+
 			<SupportFileSection
 				files={supportFiles}
 				isPending={supportFilesQuery.isPending}
@@ -400,5 +461,16 @@
 		variant="default"
 		onConfirm={confirmValidate}
 		onCancel={() => (validationDialogOpen = false)}
+	/>
+
+	<ConfirmDialog
+		bind:open={closeDialogOpen}
+		title="Cerrar legalización"
+		description={closeDescription}
+		confirmLabel="Cerrar"
+		cancelLabel="Cancelar"
+		variant="default"
+		onConfirm={confirmClose}
+		onCancel={() => (closeDialogOpen = false)}
 	/>
 </div>

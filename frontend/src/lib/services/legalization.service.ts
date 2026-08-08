@@ -37,6 +37,12 @@ class LegalizationService extends BaseService<
 			`${this.resourcePath}/${legalizationId}/validate`,
 		);
 	}
+
+	close(legalizationId: number): Promise<LegalizationResponseDto> {
+		return apiClient.post<LegalizationResponseDto>(
+			`${this.resourcePath}/${legalizationId}/close`,
+		);
+	}
 }
 
 export const legalizationService = new LegalizationService();

@@ -9,14 +9,20 @@
 	import type { TravelRequestSummary } from '$lib/models/travel-request';
 	import { travelRequestService } from '$lib/services';
 
-	type LegalizationListFilter = Extract<
-		RequestStatus,
-		'DESEMBOLSADA' | 'LEGALIZADA'
-	>;
+	type LegalizationListFilter =
+		| Extract<RequestStatus, 'DESEMBOLSADA' | 'LEGALIZADA'>
+		| 'POR_CERRAR';
 
 	const FILTERS: { value: LegalizationListFilter; label: string }[] = [
 		{ value: 'DESEMBOLSADA', label: 'Por legalizar' },
 		{ value: 'LEGALIZADA', label: 'Por validar' },
+		{ value: 'POR_CERRAR', label: 'Por cerrar' },
+	];
+
+	const CLOSABLE_STATUSES: RequestStatus[] = [
+		'VALIDADA',
+		'PENDIENTE_DEVOLUCION',
+		'PENDIENTE_REEMBOLSO',
 	];
 
 	let page = $state(0);
@@ -36,7 +42,11 @@
 
 	const data = $derived(query.data);
 	const rows = $derived(
-		(data?.content ?? []).filter((row) => row.status === statusFilter),
+		(data?.content ?? []).filter((row) =>
+			statusFilter === 'POR_CERRAR'
+				? CLOSABLE_STATUSES.includes(row.status)
+				: row.status === statusFilter,
+		),
 	);
 	const totalPages = $derived(rows.length > 0 ? 1 : 0);
 	const totalElements = $derived(rows.length);
@@ -51,6 +61,17 @@
 				emptyDescription:
 					'No hay solicitudes desembolsadas pendientes de legalización en este momento.',
 				actionLabel: 'Legalizar solicitud',
+			};
+		}
+		if (statusFilter === 'POR_CERRAR') {
+			return {
+				title: 'Legalizaciones por cerrar',
+				description:
+					'Revisa las legalizaciones validadas que están listas para cerrar.',
+				emptyTitle: 'No hay legalizaciones por cerrar',
+				emptyDescription:
+					'No hay legalizaciones validadas pendientes de cierre en este momento.',
+				actionLabel: 'Cerrar legalización',
 			};
 		}
 		return {
