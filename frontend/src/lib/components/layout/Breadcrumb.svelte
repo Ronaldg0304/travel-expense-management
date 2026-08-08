@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
-	import type { PathnameWithSearchOrHash } from '$app/types';
 	import { ChevronRight, Home } from '@lucide/svelte';
+	import { resolvePath } from '$lib/utils';
 
 	export interface BreadcrumbItem {
 		label: string;
@@ -22,7 +21,7 @@
 		{#if homeHref}
 			<li class="flex items-center gap-1">
 				<a
-					href={resolve(homeHref as PathnameWithSearchOrHash)}
+					href={resolvePath(homeHref)}
 					class="text-muted-foreground hover:text-foreground focus-visible:ring-ring flex items-center rounded-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
 					aria-label="Home"
 				>
@@ -38,7 +37,7 @@
 			<li class="flex items-center gap-1">
 				{#if item.href && i < items.length - 1}
 					<a
-						href={resolve(item.href as PathnameWithSearchOrHash)}
+						href={resolvePath(item.href)}
 						class="text-muted-foreground hover:text-foreground focus-visible:ring-ring truncate rounded-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
 					>
 						{item.label}

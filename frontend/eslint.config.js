@@ -35,4 +35,18 @@ export default tseslint.config(
 			'svelte/no-navigation-without-resolve': 'off',
 		},
 	},
+	{
+		// These modules route navigation through resolvePath(), which internally
+		// calls $app/paths resolve(), so base-path handling is preserved.
+		files: [
+			'src/lib/api/error.interceptor.ts',
+			'src/lib/auth/route-guard.ts',
+			'src/lib/navigation/navigation.config.ts',
+			'src/lib/components/layout/Breadcrumb.svelte',
+			'src/lib/components/layout/Sidebar.svelte',
+		],
+		rules: {
+			'svelte/no-navigation-without-resolve': 'off',
+		},
+	},
 );

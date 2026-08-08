@@ -1,9 +1,8 @@
 import { goto } from '$app/navigation';
-import { resolve } from '$app/paths';
-import type { PathnameWithSearchOrHash } from '$app/types';
 import type { AxiosError, AxiosInstance } from 'axios';
 import { AUTH_ROUTES } from '$lib/auth/auth.constants';
 import { clearSession } from '$lib/stores/session.store';
+import { resolvePath } from '$lib/utils';
 
 interface ApiErrorBody {
 	message?: string | null;
@@ -37,7 +36,7 @@ async function onResponseError(error: AxiosError): Promise<never> {
 		if (!handlingUnauthorized && !isLoginPath()) {
 			handlingUnauthorized = true;
 			try {
-				await goto(resolve(AUTH_ROUTES.login as PathnameWithSearchOrHash));
+				await goto(resolvePath(AUTH_ROUTES.login));
 			} finally {
 				handlingUnauthorized = false;
 			}

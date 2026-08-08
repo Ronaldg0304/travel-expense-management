@@ -1,6 +1,4 @@
 import { goto } from '$app/navigation';
-import { resolve } from '$app/paths';
-import type { PathnameWithSearchOrHash } from '$app/types';
 import { get } from 'svelte/store';
 import {
 	AUTH_ROUTES,
@@ -9,8 +7,7 @@ import {
 } from '$lib/auth/auth.constants';
 import { authStatus } from '$lib/auth/auth.store';
 import type { AuthStatus } from '$lib/auth/auth.types';
-
-type ResolveRoute = PathnameWithSearchOrHash;
+import { resolvePath } from '$lib/utils';
 
 export function resolveRouteRedirect(
 	status: AuthStatus,
@@ -26,14 +23,14 @@ export function resolveRouteRedirect(
 export function applyRouteGuard(status: AuthStatus, pathname: string): void {
 	const target = resolveRouteRedirect(status, pathname);
 	if (target) {
-		void goto(resolve(target as ResolveRoute));
+		void goto(resolvePath(target));
 	}
 }
 
 export function requireAuth(): boolean {
 	const status = get(authStatus);
 	if (status === 'unauthenticated') {
-		void goto(resolve(AUTH_ROUTES.login as ResolveRoute));
+		void goto(resolvePath(AUTH_ROUTES.login));
 		return false;
 	}
 	return status === 'authenticated';

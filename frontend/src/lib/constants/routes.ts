@@ -12,6 +12,7 @@ export const ROUTES = {
 		costCenters: '/centros-de-costo',
 		costCentersNew: '/centros-de-costo/new',
 		expenseTypes: '/tipos-de-gasto',
+		expenseTypesNew: '/tipos-de-gasto/new',
 		accounts: '/cuentas',
 		travelRequests: '/solicitudes-de-viaje',
 		audit: '/auditoria',

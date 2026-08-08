@@ -1,8 +1,7 @@
-import { resolve } from '$app/paths';
-import type { PathnameWithSearchOrHash } from '$app/types';
 import type { AuthenticatedUser } from '$lib/auth';
 import { hasAnyRole } from '$lib/auth/permission';
 import { ROUTES } from '$lib/constants/routes';
+import { resolvePath } from '$lib/utils';
 import {
 	Building2,
 	CircleDollarSign,
@@ -197,10 +196,8 @@ export function getNavigationForRoles(
 	return [...merged.values()];
 }
 
-type ResolveRoute = PathnameWithSearchOrHash;
-
 export function isNavItemActive(item: NavItem, pathname: string): boolean {
-	const href = resolve(item.href as ResolveRoute);
+	const href = resolvePath(item.href);
 	if (href === '/') return pathname === '/';
 	return pathname === href || pathname.startsWith(`${href}/`);
 }

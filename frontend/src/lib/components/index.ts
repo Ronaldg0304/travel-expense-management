@@ -1,6 +1,7 @@
 export * from './auth';
 export * from './common';
 export * from './cost-centers';
+export * from './expense-types';
 export * from './layout';
 export * from './tables';
 export * from './users';
