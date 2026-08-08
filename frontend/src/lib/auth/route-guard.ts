@@ -1,5 +1,6 @@
 import { goto } from '$app/navigation';
 import { resolve } from '$app/paths';
+import type { PathnameWithSearchOrHash } from '$app/types';
 import { get } from 'svelte/store';
 import {
 	AUTH_ROUTES,
@@ -9,7 +10,7 @@ import {
 import { authStatus } from '$lib/auth/auth.store';
 import type { AuthStatus } from '$lib/auth/auth.types';
 
-type ResolveRoute = Parameters<typeof resolve>[0];
+type ResolveRoute = PathnameWithSearchOrHash;
 
 export function resolveRouteRedirect(
 	status: AuthStatus,

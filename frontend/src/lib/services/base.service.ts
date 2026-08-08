@@ -1,7 +1,13 @@
 import { apiClient } from '$lib/api/api-client';
 import type { PageRequest, PageResponse } from '$lib/types/pagination';
 
-function toPageParams(pageRequest: PageRequest): URLSearchParams {
+/**
+ * Serializes a `PageRequest` as Spring Data `Pageable` query params
+ * (`page`, `size`, repeated `sort=property,direction`; `page` is 0-based).
+ */
+export function serializePageRequest(
+	pageRequest: PageRequest,
+): URLSearchParams {
 	const params = new URLSearchParams();
 	params.set('page', String(pageRequest.page));
 	params.set('size', String(pageRequest.size));
@@ -13,9 +19,7 @@ function toPageParams(pageRequest: PageRequest): URLSearchParams {
 
 /**
  * Generic CRUD service over a REST resource path (e.g. `/v1/cost-centers`).
- *
- * `getPage` serializes `PageRequest` as Spring Data `Pageable` query params
- * (`page`, `size`, repeated `sort=property,direction`; `page` is 0-based).
+ * `getPage` sends `PageRequest` as Spring Data `Pageable` query params.
  */
 export abstract class BaseService<T, TCreate = T, TUpdate = T, TId = number> {
 	protected constructor(protected readonly resourcePath: string) {}
@@ -24,9 +28,20 @@ export abstract class BaseService<T, TCreate = T, TUpdate = T, TId = number> {
 		return apiClient.get<T>(`${this.resourcePath}/${id}`);
 	}
 
-	getPage(pageRequest: PageRequest): Promise<PageResponse<T>> {
-		return apiClient.get<PageResponse<T>>(this.resourcePath, {
-			params: toPageParams(pageRequest),
+	getPage<TItem = T>(
+		pageRequest: PageRequest,
+		extraParams?: object,
+	): Promise<PageResponse<TItem>> {
+		const params = serializePageRequest(pageRequest);
+		if (extraParams) {
+			for (const [key, value] of Object.entries(extraParams)) {
+				if (value !== undefined && value !== null && value !== '') {
+					params.set(key, String(value));
+				}
+			}
+		}
+		return apiClient.get<PageResponse<TItem>>(this.resourcePath, {
+			params,
 		});
 	}
 

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
+	import type { PathnameWithSearchOrHash } from '$app/types';
 	import type { Snippet } from 'svelte';
 	import type { NavItem, NavSection } from '$lib/navigation';
 	import { isNavItemActive } from '$lib/navigation';
@@ -139,7 +140,7 @@
 
 {#snippet itemLink(item: NavItem)}
 	<a
-		href={resolve(item.href as Parameters<typeof resolve>[0])}
+		href={resolve(item.href as PathnameWithSearchOrHash)}
 		onclick={onNavigate}
 		class={cn(
 			'group focus-visible:ring-ring flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none',

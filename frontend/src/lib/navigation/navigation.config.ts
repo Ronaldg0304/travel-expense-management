@@ -1,4 +1,5 @@
 import { resolve } from '$app/paths';
+import type { PathnameWithSearchOrHash } from '$app/types';
 import type { AuthenticatedUser } from '$lib/auth';
 import { hasAnyRole } from '$lib/auth/permission';
 import { ROUTES } from '$lib/constants/routes';
@@ -196,7 +197,7 @@ export function getNavigationForRoles(
 	return [...merged.values()];
 }
 
-type ResolveRoute = Parameters<typeof resolve>[0];
+type ResolveRoute = PathnameWithSearchOrHash;
 
 export function isNavItemActive(item: NavItem, pathname: string): boolean {
 	const href = resolve(item.href as ResolveRoute);

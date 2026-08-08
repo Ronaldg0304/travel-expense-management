@@ -6,7 +6,8 @@ export const ROUTES = {
 		home: '/dashboard',
 	},
 	admin: {
-		users: '/usuarios',
+		users: '/users',
+		usersNew: '/users/new',
 		departments: '/departamentos',
 		costCenters: '/centros-de-costo',
 		expenseTypes: '/tipos-de-gasto',
