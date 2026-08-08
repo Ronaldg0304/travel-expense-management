@@ -29,7 +29,7 @@ export const ROUTES = {
 		approvals: '/approvals',
 	},
 	finance: {
-		disbursements: '/desembolsos',
+		disbursements: '/disbursements',
 		settlements: '/legalizaciones',
 		reimbursements: '/reembolsos',
 		refunds: '/devoluciones',
