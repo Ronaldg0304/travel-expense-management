@@ -31,7 +31,7 @@ export const ROUTES = {
 	finance: {
 		disbursements: '/disbursements',
 		settlements: '/legalizations',
-		reimbursements: '/reembolsos',
+		reimbursements: '/reimbursements',
 		refunds: '/refunds',
 	},
 } as const;

@@ -5,6 +5,7 @@ export * from './disbursement';
 export * from './expense-type';
 export * from './legalization';
 export * from './refund';
+export * from './reimbursement';
 export * from './settlement';
 export * from './support-file';
 export * from './travel-request';

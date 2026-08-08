@@ -23,6 +23,12 @@ class AccountService extends BaseService<
 		return this.getPage<AccountSummaryResponseDto>(pageRequest);
 	}
 
+	getAccountsByUser(userId: number): Promise<AccountSummaryResponseDto[]> {
+		return apiClient.get<AccountSummaryResponseDto[]>(
+			`${this.resourcePath}/user/${userId}`,
+		);
+	}
+
 	activate(id: number): Promise<void> {
 		return apiClient.patch<void>(`${this.resourcePath}/${id}/activate`);
 	}
