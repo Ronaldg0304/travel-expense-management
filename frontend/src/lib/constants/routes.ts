@@ -32,6 +32,6 @@ export const ROUTES = {
 		disbursements: '/disbursements',
 		settlements: '/legalizations',
 		reimbursements: '/reembolsos',
-		refunds: '/devoluciones',
+		refunds: '/refunds',
 	},
 } as const;

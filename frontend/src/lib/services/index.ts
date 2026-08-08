@@ -5,6 +5,7 @@ export { departmentService } from './department.service';
 export { disbursementService } from './disbursement.service';
 export { expenseTypeService } from './expense-type.service';
 export { legalizationService } from './legalization.service';
+export { refundService } from './refund.service';
 export { supportFileService } from './support-file.service';
 export { travelApprovalService } from './travel-approval.service';
 export { travelRequestService } from './travel-request.service';
