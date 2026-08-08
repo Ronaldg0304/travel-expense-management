@@ -4,6 +4,7 @@ export * from './cost-center';
 export * from './disbursement';
 export * from './expense-type';
 export * from './legalization';
+export * from './settlement';
 export * from './support-file';
 export * from './travel-request';
 export * from './user';

@@ -9,11 +9,13 @@
 	} from '@tanstack/svelte-query';
 	import { ArrowLeft } from '@lucide/svelte';
 	import { getApiErrorMessage, normalizeApiError } from '$lib/api/api-error';
+	import { hasAnyRole } from '$lib/auth/permission';
 	import { ConfirmDialog, PageHeader } from '$lib/components/common';
 	import { ApiError, LoadingState, toast } from '$lib/components/feedback';
 	import {
 		LegalizationDetail,
 		LegalizationForm,
+		LegalizationValidationSection,
 		SupportFileSection,
 	} from '$lib/components/legalizations';
 	import { TravelRequestDetail } from '$lib/components/travel-requests';
@@ -21,8 +23,10 @@
 	import { ROUTES } from '$lib/constants/routes';
 	import type { CreateLegalizationDto } from '$lib/dto/legalization';
 	import { toLegalization } from '$lib/mapper/legalization.mapper';
+	import { toSettlementAnalysis } from '$lib/mapper/settlement.mapper';
 	import { toSupportFile } from '$lib/mapper/support-file.mapper';
 	import { toTravelRequest } from '$lib/mapper/travel-request.mapper';
+	import type { SettlementAnalysis } from '$lib/models/settlement';
 	import type { SupportFile } from '$lib/models/support-file';
 	import {
 		costCenterService,
@@ -31,6 +35,7 @@
 		supportFileService,
 		travelRequestService,
 	} from '$lib/services';
+	import { user } from '$lib/stores/user.store';
 	import { formatCurrency } from '$lib/utils';
 
 	const travelRequestId = Number(page.params.id);
@@ -184,6 +189,67 @@
 		},
 	}));
 
+	const canValidate = $derived(
+		hasAnyRole($user, ['FINANCIERA', 'ADMINISTRADOR']) &&
+			legalization?.status === 'LEGALIZADA',
+	);
+
+	const settlementAnalysisQuery = createQuery(() => ({
+		queryKey: ['legalization', 'settlement-analysis', currentLegalizationId],
+		queryFn: () => {
+			if (currentLegalizationId == null) {
+				throw new Error('No hay una legalización cargada');
+			}
+			return legalizationService.getSettlementAnalysis(currentLegalizationId);
+		},
+		enabled: canValidate,
+	}));
+
+	const analysis = $derived(
+		settlementAnalysisQuery.data
+			? toSettlementAnalysis(settlementAnalysisQuery.data)
+			: null,
+	);
+
+	let validationDialogOpen = $state(false);
+
+	const validationDescription = $derived(
+		analysis
+			? `La legalización de la solicitud ${analysis.requestNumber} será validada. El sistema calculará la liquidación (monto desembolsado ${formatCurrency(analysis.disbursedAmount)}, gastos legalizados ${formatCurrency(analysis.totalExpenses)}) y actualizará el estado según el resultado. Esta acción no se puede deshacer.`
+			: '',
+	);
+
+	const validateMutation = createMutation(() => ({
+		mutationFn: () => {
+			if (currentLegalizationId == null) {
+				throw new Error('No hay una legalización cargada');
+			}
+			return legalizationService.validate(currentLegalizationId);
+		},
+		onSuccess: () => {
+			void queryClient.invalidateQueries({
+				queryKey: ['legalization', 'by-travel-request', travelRequestId],
+			});
+			void queryClient.invalidateQueries({
+				queryKey: ['travel-request', travelRequestId],
+			});
+			void queryClient.invalidateQueries({ queryKey: ['travel-requests'] });
+			toast.success('Legalización validada correctamente');
+		},
+		onError: (error) => {
+			toast.error(
+				'No se pudo validar la legalización',
+				getApiErrorMessage(error),
+			);
+		},
+	}));
+
+	async function confirmValidate() {
+		if (currentLegalizationId == null) return;
+		await validateMutation.mutateAsync();
+		validationDialogOpen = false;
+	}
+
 	let pendingPayload = $state<CreateLegalizationDto | null>(null);
 	let confirmDialogOpen = $state(false);
 
@@ -289,6 +355,18 @@
 		{:else if legalization}
 			<LegalizationDetail legalization={legalization} />
 
+			{#if canValidate}
+				<LegalizationValidationSection
+					analysis={analysis}
+					isPending={settlementAnalysisQuery.isPending}
+					error={settlementAnalysisQuery.error}
+					onRetry={() => void settlementAnalysisQuery.refetch()}
+					status={legalization.status}
+					validating={validateMutation.isPending}
+					onValidate={() => (validationDialogOpen = true)}
+				/>
+			{/if}
+
 			<SupportFileSection
 				files={supportFiles}
 				isPending={supportFilesQuery.isPending}
@@ -311,5 +389,16 @@
 		variant="default"
 		onConfirm={confirmCreate}
 		onCancel={() => (confirmDialogOpen = false)}
+	/>
+
+	<ConfirmDialog
+		bind:open={validationDialogOpen}
+		title="Validar legalización"
+		description={validationDescription}
+		confirmLabel="Validar"
+		cancelLabel="Cancelar"
+		variant="default"
+		onConfirm={confirmValidate}
+		onCancel={() => (validationDialogOpen = false)}
 	/>
 </div>
