@@ -2,11 +2,16 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { createQuery } from '@tanstack/svelte-query';
-	import { ArrowLeft } from '@lucide/svelte';
+	import {
+		createMutation,
+		createQuery,
+		useQueryClient,
+	} from '@tanstack/svelte-query';
+	import { ArrowLeft, Send } from '@lucide/svelte';
+	import { getApiErrorMessage } from '$lib/api/api-error';
 	import { Button } from '$lib/components/ui/button';
-	import { PageHeader } from '$lib/components/common';
-	import { ApiError, LoadingState } from '$lib/components/feedback';
+	import { ConfirmDialog, PageHeader } from '$lib/components/common';
+	import { ApiError, LoadingState, toast } from '$lib/components/feedback';
 	import { TravelRequestDetail } from '$lib/components/travel-requests';
 	import { ROUTES } from '$lib/constants/routes';
 	import { toTravelRequest } from '$lib/mapper/travel-request.mapper';
@@ -25,16 +30,50 @@
 			: undefined,
 	);
 
+	const canSubmit = $derived(travelRequest?.status === 'BORRADOR');
+
+	const queryClient = useQueryClient();
+
+	const submitMutation = createMutation(() => ({
+		mutationFn: (id: number) => travelRequestService.submitForApproval(id),
+		onSuccess: () => {
+			void queryClient.invalidateQueries({
+				queryKey: ['travel-request', travelRequestId],
+			});
+			toast.success('Solicitud enviada para aprobación');
+		},
+		onError: (error) => {
+			toast.error('No se pudo enviar la solicitud', getApiErrorMessage(error));
+		},
+	}));
+
+	let submitDialogOpen = $state(false);
+
+	async function confirmSubmit() {
+		await submitMutation.mutateAsync(travelRequestId);
+	}
+
 	function handleBack() {
 		void goto(resolve(ROUTES.admin.travelRequests));
 	}
 </script>
 
 {#snippet headerActions()}
-	<Button variant="outline" onclick={handleBack}>
-		<ArrowLeft aria-hidden="true" />
-		Volver
-	</Button>
+	<div class="flex items-center gap-2">
+		{#if canSubmit}
+			<Button
+				onclick={() => (submitDialogOpen = true)}
+				disabled={submitMutation.isPending}
+			>
+				<Send aria-hidden="true" />
+				Enviar
+			</Button>
+		{/if}
+		<Button variant="outline" onclick={handleBack}>
+			<ArrowLeft aria-hidden="true" />
+			Volver
+		</Button>
+	</div>
 {/snippet}
 
 <div class="space-y-6">
@@ -59,4 +98,15 @@
 	{:else if travelRequest}
 		<TravelRequestDetail request={travelRequest} />
 	{/if}
+
+	<ConfirmDialog
+		bind:open={submitDialogOpen}
+		title="Enviar solicitud para aprobación"
+		description="La solicitud dejará de ser un borrador y pasará a estado Enviada. Esta acción no se puede deshacer."
+		confirmLabel="Enviar"
+		cancelLabel="Cancelar"
+		variant="default"
+		onConfirm={confirmSubmit}
+		onCancel={() => (submitDialogOpen = false)}
+	/>
 </div>

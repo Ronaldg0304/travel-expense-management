@@ -26,6 +26,12 @@ class TravelRequestService extends BaseService<TravelRequestResponseDto> {
 			payload,
 		);
 	}
+
+	submitForApproval(id: number): Promise<TravelRequestResponseDto> {
+		return apiClient.post<TravelRequestResponseDto>(
+			`${this.resourcePath}/${id}/submit`,
+		);
+	}
 }
 
 export const travelRequestService = new TravelRequestService();
