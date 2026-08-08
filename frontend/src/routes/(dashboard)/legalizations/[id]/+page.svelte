@@ -14,17 +14,21 @@
 	import {
 		LegalizationDetail,
 		LegalizationForm,
+		SupportFileSection,
 	} from '$lib/components/legalizations';
 	import { TravelRequestDetail } from '$lib/components/travel-requests';
 	import { Button } from '$lib/components/ui/button';
 	import { ROUTES } from '$lib/constants/routes';
 	import type { CreateLegalizationDto } from '$lib/dto/legalization';
 	import { toLegalization } from '$lib/mapper/legalization.mapper';
+	import { toSupportFile } from '$lib/mapper/support-file.mapper';
 	import { toTravelRequest } from '$lib/mapper/travel-request.mapper';
+	import type { SupportFile } from '$lib/models/support-file';
 	import {
 		costCenterService,
 		expenseTypeService,
 		legalizationService,
+		supportFileService,
 		travelRequestService,
 	} from '$lib/services';
 	import { formatCurrency } from '$lib/utils';
@@ -89,6 +93,75 @@
 	);
 
 	const queryClient = useQueryClient();
+
+	const currentLegalizationId = $derived(legalization?.id);
+
+	const supportFilesQuery = createQuery(() => ({
+		queryKey: ['legalization', 'support-files', travelRequestId],
+		queryFn: () => {
+			if (currentLegalizationId == null) {
+				throw new Error('No hay una legalización cargada');
+			}
+			return supportFileService.list(currentLegalizationId);
+		},
+		enabled: currentLegalizationId != null,
+	}));
+
+	const supportFiles = $derived(
+		(supportFilesQuery.data ?? []).map(toSupportFile),
+	);
+
+	let uploadProgress = $state(0);
+
+	const uploadMutation = createMutation(() => ({
+		mutationFn: (file: File) => {
+			if (currentLegalizationId == null) {
+				throw new Error('No hay una legalización cargada');
+			}
+			return supportFileService.upload(currentLegalizationId, file, (percent) => {
+				uploadProgress = percent;
+			});
+		},
+		onSuccess: () => {
+			void queryClient.invalidateQueries({
+				queryKey: ['legalization', 'support-files', travelRequestId],
+			});
+			toast.success('Archivo subido correctamente');
+		},
+		onError: (error) => {
+			toast.error('No se pudo subir el archivo', getApiErrorMessage(error));
+		},
+		onSettled: () => {
+			uploadProgress = 0;
+		},
+	}));
+
+	function handleUpload(file: File) {
+		uploadMutation.mutate(file);
+	}
+
+	async function handleDownload(file: SupportFile) {
+		if (currentLegalizationId == null) return;
+		try {
+			const blob = await supportFileService.download(
+				currentLegalizationId,
+				file.id,
+			);
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = file.originalFileName;
+			document.body.appendChild(link);
+			link.click();
+			link.remove();
+			URL.revokeObjectURL(url);
+		} catch (error) {
+			toast.error(
+				'No se pudo descargar el archivo',
+				getApiErrorMessage(error),
+			);
+		}
+	}
 
 	const createMutation = createMutation(() => ({
 		mutationFn: (payload: CreateLegalizationDto) =>
@@ -215,6 +288,17 @@
 			{/if}
 		{:else if legalization}
 			<LegalizationDetail legalization={legalization} />
+
+			<SupportFileSection
+				files={supportFiles}
+				isPending={supportFilesQuery.isPending}
+				error={supportFilesQuery.error}
+				onRetry={() => void supportFilesQuery.refetch()}
+				uploading={uploadMutation.isPending}
+				uploadProgress={uploadProgress}
+				onUpload={handleUpload}
+				onDownload={handleDownload}
+			/>
 		{/if}
 	{/if}
 

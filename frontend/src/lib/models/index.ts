@@ -3,5 +3,6 @@ export * from './approval';
 export * from './cost-center';
 export * from './expense-type';
 export * from './legalization';
+export * from './support-file';
 export * from './travel-request';
 export * from './user';
