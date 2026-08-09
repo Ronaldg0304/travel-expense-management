@@ -1,6 +1,7 @@
 export * from './account';
 export * from './approval';
 export * from './cost-center';
+export * from './department';
 export * from './expense-type';
 export * from './legalization';
 export * from './settlement';

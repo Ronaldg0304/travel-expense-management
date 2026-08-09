@@ -1,6 +1,7 @@
 export { BaseService } from './base.service';
 export { accountService } from './account.service';
 export { costCenterService } from './cost-center.service';
+export { departmentApproverService } from './department-approver.service';
 export { departmentService } from './department.service';
 export { disbursementService } from './disbursement.service';
 export { expenseTypeService } from './expense-type.service';
