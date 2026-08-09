@@ -45,6 +45,7 @@ export default tseslint.config(
 			'src/lib/components/layout/Breadcrumb.svelte',
 			'src/lib/components/layout/Sidebar.svelte',
 			'src/routes/(dashboard)/travel-requests/new/+page.svelte',
+			'src/routes/(dashboard)/solicitud/nueva/+page.svelte',
 		],
 		rules: {
 			'svelte/no-navigation-without-resolve': 'off',

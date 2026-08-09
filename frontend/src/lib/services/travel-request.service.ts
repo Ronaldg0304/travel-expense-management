@@ -4,7 +4,7 @@ import type {
 	TravelRequestResponseDto,
 	TravelRequestSummaryResponseDto,
 } from '$lib/dto/travel-request';
-import { BaseService } from '$lib/services/base.service';
+import { BaseService, serializePageRequest } from '$lib/services/base.service';
 import type { PageRequest, PageResponse } from '$lib/types/pagination';
 
 class TravelRequestService extends BaseService<TravelRequestResponseDto> {
@@ -16,6 +16,15 @@ class TravelRequestService extends BaseService<TravelRequestResponseDto> {
 		pageRequest: PageRequest,
 	): Promise<PageResponse<TravelRequestSummaryResponseDto>> {
 		return this.getPage<TravelRequestSummaryResponseDto>(pageRequest);
+	}
+
+	getMyTravelRequests(
+		pageRequest: PageRequest,
+	): Promise<PageResponse<TravelRequestSummaryResponseDto>> {
+		return apiClient.get<PageResponse<TravelRequestSummaryResponseDto>>(
+			`${this.resourcePath}/my`,
+			{ params: serializePageRequest(pageRequest) },
+		);
 	}
 
 	createDraft(
