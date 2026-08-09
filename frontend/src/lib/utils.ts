@@ -1,3 +1,3 @@
 export * from './utils/cn';
 export { resolvePath } from './utils/paths';
-export { formatCurrency, formatDate } from './utils/format';
+export { formatCurrency, formatDate, formatFileSize } from './utils/format';
